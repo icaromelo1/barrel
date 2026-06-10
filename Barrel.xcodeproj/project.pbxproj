@@ -8,9 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		0261C095368C0AA0617C25D0 /* Bottle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE997671FDC4125B01DD43E /* Bottle.swift */; };
+		03CE3BD6FC70E09FF9030759 /* CoverArtView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57CB357947BA9858221327F /* CoverArtView.swift */; };
 		258B20DF1E021DD97FE17F18 /* WineService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1414C16EE24D44F94D766B3C /* WineService.swift */; };
+		2A01D81CDBB51EFB15210276 /* GameCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BD2CCDFE34ACB391A131FA8 /* GameCardView.swift */; };
+		2D27686E1CF782FC415992DD /* CreateBottleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F276549FAC464B9FC2E93EA0 /* CreateBottleSheet.swift */; };
+		4398E130DCFA61F498CB684D /* DependencyListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09BC375CE07B432EAA94A16 /* DependencyListView.swift */; };
 		4CE6C64AAA37DABF7C1CFCDB /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C34175EF0976A8353103E4 /* StorageManager.swift */; };
 		554BB0E78771938E10D40AF1 /* WineBuild.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72A06CEB8F80A4C0E1F4484F /* WineBuild.swift */; };
+		6829637023E4967D86D43DDE /* BottleSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618C37F29A5DBCD74012FF15 /* BottleSidebarView.swift */; };
 		7C6E97EAC810DB646EE38ACA /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7760B69269393A2549EFEF50 /* Game.swift */; };
 		9D2B476C0F8021E0B19B5E7A /* DependencyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5269F7A5B2B41C62FB047B5F /* DependencyService.swift */; };
 		A061E4A662E0ADFC2E9F7C57 /* BarrelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1790EFD23BE9F25F35FC0CF /* BarrelTests.swift */; };
@@ -18,8 +23,11 @@
 		B6D5A29C3367D4952F666F77 /* BarrelError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46034BF6E0B5858B04CFDE5 /* BarrelError.swift */; };
 		B8D486F126B8031051761E0A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF7C6039DD4C6070113F8BA /* ContentView.swift */; };
 		BBB5FF7C7B5C5AFE282F6C7E /* DownloadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7273A1C2C85B66C3320B5101 /* DownloadService.swift */; };
+		BE4888F1FFB60F04A16EF414 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814AADD24085CB625EBC637A /* LibraryView.swift */; };
 		D2F7B55BE8A94108400D2066 /* GameService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563D8752EBB61EDEB6C7F644 /* GameService.swift */; };
+		EBE561C8CBABDFE5327A22E6 /* GameDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA32C13D2B032A8C875C3D1A /* GameDetailView.swift */; };
 		EC42F611BF78F36667B1F7C6 /* BarrelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A8868DA19B8B42FB58C65A8 /* BarrelApp.swift */; };
+		FBB8DEE9EC9E7224C9085B1C /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D3EDE199CB554309DA866C /* DesignTokens.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,20 +43,28 @@
 /* Begin PBXFileReference section */
 		0CE997671FDC4125B01DD43E /* Bottle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bottle.swift; sourceTree = "<group>"; };
 		1414C16EE24D44F94D766B3C /* WineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineService.swift; sourceTree = "<group>"; };
+		3BD2CCDFE34ACB391A131FA8 /* GameCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCardView.swift; sourceTree = "<group>"; };
 		42C5FECD0FD630374A92E9C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		49C34175EF0976A8353103E4 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		51504F221214A7922BC80511 /* BarrelTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BarrelTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5269F7A5B2B41C62FB047B5F /* DependencyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyService.swift; sourceTree = "<group>"; };
 		563D8752EBB61EDEB6C7F644 /* GameService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameService.swift; sourceTree = "<group>"; };
+		618C37F29A5DBCD74012FF15 /* BottleSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleSidebarView.swift; sourceTree = "<group>"; };
 		6A8868DA19B8B42FB58C65A8 /* BarrelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarrelApp.swift; sourceTree = "<group>"; };
 		6CA10A41D3311C807E65C9AA /* Barrel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Barrel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7273A1C2C85B66C3320B5101 /* DownloadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadService.swift; sourceTree = "<group>"; };
 		72A06CEB8F80A4C0E1F4484F /* WineBuild.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineBuild.swift; sourceTree = "<group>"; };
 		7760B69269393A2549EFEF50 /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
+		814AADD24085CB625EBC637A /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		A1790EFD23BE9F25F35FC0CF /* BarrelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarrelTests.swift; sourceTree = "<group>"; };
+		AA32C13D2B032A8C875C3D1A /* GameDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDetailView.swift; sourceTree = "<group>"; };
 		C46034BF6E0B5858B04CFDE5 /* BarrelError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarrelError.swift; sourceTree = "<group>"; };
 		CD68C95117010B211A54F679 /* Barrel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Barrel.entitlements; sourceTree = "<group>"; };
+		D09BC375CE07B432EAA94A16 /* DependencyListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyListView.swift; sourceTree = "<group>"; };
+		E57CB357947BA9858221327F /* CoverArtView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverArtView.swift; sourceTree = "<group>"; };
 		E5F1B7A03FE1C8BAD1717242 /* BottleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleService.swift; sourceTree = "<group>"; };
+		F276549FAC464B9FC2E93EA0 /* CreateBottleSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateBottleSheet.swift; sourceTree = "<group>"; };
+		F3D3EDE199CB554309DA866C /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		FCF7C6039DD4C6070113F8BA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -65,6 +81,8 @@
 		159C5B4085714AD373965038 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				E57CB357947BA9858221327F /* CoverArtView.swift */,
+				F3D3EDE199CB554309DA866C /* DesignTokens.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -94,6 +112,8 @@
 		41080DA36B4785A46BA39DD8 /* Bottle */ = {
 			isa = PBXGroup;
 			children = (
+				618C37F29A5DBCD74012FF15 /* BottleSidebarView.swift */,
+				F276549FAC464B9FC2E93EA0 /* CreateBottleSheet.swift */,
 			);
 			path = Bottle;
 			sourceTree = "<group>";
@@ -108,6 +128,7 @@
 		4848380AFDE9E3A3B9ADED11 /* Game */ = {
 			isa = PBXGroup;
 			children = (
+				AA32C13D2B032A8C875C3D1A /* GameDetailView.swift */,
 			);
 			path = Game;
 			sourceTree = "<group>";
@@ -155,6 +176,8 @@
 		ABBE27BC26D75F53D7665DEA /* Library */ = {
 			isa = PBXGroup;
 			children = (
+				3BD2CCDFE34ACB391A131FA8 /* GameCardView.swift */,
+				814AADD24085CB625EBC637A /* LibraryView.swift */,
 			);
 			path = Library;
 			sourceTree = "<group>";
@@ -162,6 +185,7 @@
 		C628D274E7A7B76C71E142F2 /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				D09BC375CE07B432EAA94A16 /* DependencyListView.swift */,
 			);
 			path = Dependencies;
 			sourceTree = "<group>";
@@ -282,11 +306,19 @@
 				B6D5A29C3367D4952F666F77 /* BarrelError.swift in Sources */,
 				0261C095368C0AA0617C25D0 /* Bottle.swift in Sources */,
 				B0F36FBD160B3D7C52A7693C /* BottleService.swift in Sources */,
+				6829637023E4967D86D43DDE /* BottleSidebarView.swift in Sources */,
 				B8D486F126B8031051761E0A /* ContentView.swift in Sources */,
+				03CE3BD6FC70E09FF9030759 /* CoverArtView.swift in Sources */,
+				2D27686E1CF782FC415992DD /* CreateBottleSheet.swift in Sources */,
+				4398E130DCFA61F498CB684D /* DependencyListView.swift in Sources */,
 				9D2B476C0F8021E0B19B5E7A /* DependencyService.swift in Sources */,
+				FBB8DEE9EC9E7224C9085B1C /* DesignTokens.swift in Sources */,
 				BBB5FF7C7B5C5AFE282F6C7E /* DownloadService.swift in Sources */,
 				7C6E97EAC810DB646EE38ACA /* Game.swift in Sources */,
+				2A01D81CDBB51EFB15210276 /* GameCardView.swift in Sources */,
+				EBE561C8CBABDFE5327A22E6 /* GameDetailView.swift in Sources */,
 				D2F7B55BE8A94108400D2066 /* GameService.swift in Sources */,
+				BE4888F1FFB60F04A16EF414 /* LibraryView.swift in Sources */,
 				4CE6C64AAA37DABF7C1CFCDB /* StorageManager.swift in Sources */,
 				554BB0E78771938E10D40AF1 /* WineBuild.swift in Sources */,
 				258B20DF1E021DD97FE17F18 /* WineService.swift in Sources */,
