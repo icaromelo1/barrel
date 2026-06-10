@@ -1,0 +1,38 @@
+name: Barrel
+options:
+  bundleIdPrefix: dev.icaromelo
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: dev.icaromelo.barrel
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    SWIFT_VERSION: "5.9"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  Barrel:
+    type: application
+    platform: macOS
+    sources:
+      - Barrel
+    settings:
+      base:
+        INFOPLIST_FILE: Barrel/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Barrel/Resources/Barrel.entitlements
+    scheme:
+      testTargets:
+        - BarrelTests
+
+  BarrelTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - BarrelTests
+    dependencies:
+      - target: Barrel
