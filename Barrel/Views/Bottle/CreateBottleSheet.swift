@@ -2,53 +2,41 @@ import SwiftUI
 
 struct CreateBottleSheet: View {
     @Binding var isPresented: Bool
-    @State private var name = "RPG Vault"
-    @State private var selectedAPI: GraphicsAPI = .dx12
-    @State private var selectedPreset: GamePreset = .rpg
+    @ObservedObject var bottleVM: BottleViewModel
 
-    enum GraphicsAPI: CaseIterable {
-        case dx12, dx11, opengl
-        var label: String { switch self { case .dx12: "DirectX 12"; case .dx11: "DirectX 11"; case .opengl: "OpenGL" } }
-        var sublabel: String { switch self { case .dx12: "VKD3D · modern"; case .dx11: "DXVK · broad"; case .opengl: "Native · legacy" } }
-        var icon: String { switch self { case .dx12: "display"; case .dx11: "display"; case .opengl: "cube" } }
-    }
+    @State private var name = ""
+    @State private var selectedPreset: BottlePreset = .steam
+    @State private var showAdvanced = false
+    @State private var selectedRenderer: Renderer = .dxvk
+    @State private var esync = true
+    @State private var msync = true
+    @State private var errorMessage: String?
 
-    enum GamePreset: CaseIterable {
-        case fps, rpg, strategy
-        var label: String { switch self { case .fps: "FPS"; case .rpg: "RPG"; case .strategy: "Strategy" } }
-        var subtitle: String { switch self { case .fps: "Low latency"; case .rpg: "Large prefix"; case .strategy: "Multi-core" } }
-        var icon: String { switch self { case .fps: "scope"; case .rpg: "shield"; case .strategy: "flag" } }
-        var gradient: LinearGradient {
-            switch self {
-            case .fps:      .init(colors: [Color(hex: "#ff7a3d"), Color(hex: "#ff4d6d")], startPoint: .topLeading, endPoint: .bottomTrailing)
-            case .rpg:      .init(colors: [Color(hex: "#9a6bff"), Color(hex: "#6f54f0")], startPoint: .topLeading, endPoint: .bottomTrailing)
-            case .strategy: .init(colors: [Color(hex: "#4aa3ff"), Color(hex: "#34c7c0")], startPoint: .topLeading, endPoint: .bottomTrailing)
-            }
-        }
-    }
+    // BottlePreset is now defined in Bottle.swift (top-level)
 
     var body: some View {
         VStack(spacing: 0) {
+            // Content
             VStack(alignment: .leading, spacing: 0) {
                 Text("New Bottle")
                     .font(.system(size: 19, weight: .bold))
                     .tracking(-0.4)
                     .foregroundStyle(Color.t1)
 
-                Text("An isolated Windows environment that keeps each game's files and settings apart.")
+                Text("An isolated Windows environment for your games.")
                     .font(.system(size: 13))
                     .foregroundStyle(Color.t2)
                     .padding(.top, 4)
 
-                // name field
+                // Name
                 Text("Name")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.t2)
-                    .padding(.top, 20)
+                    .padding(.top, 22)
                     .padding(.bottom, 8)
 
                 HStack {
-                    TextField("", text: $name)
+                    TextField("Bottle name", text: $name)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(Color.t1)
                         .textFieldStyle(.plain)
@@ -61,44 +49,103 @@ struct CreateBottleSheet: View {
                         .stroke(Color(hex: "#8b6bff"), lineWidth: 0.5)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 9))
-                .shadow(color: Color(hex: "#8b6bff").opacity(0.25), radius: 3)
+                .shadow(color: Color(hex: "#8b6bff").opacity(0.2), radius: 3)
 
-                // graphics API
-                Text("Graphics API")
+                // Preset
+                Text("Setup")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.t2)
-                    .padding(.top, 20)
-                    .padding(.bottom, 8)
+                    .padding(.top, 22)
+                    .padding(.bottom, 10)
 
-                HStack(spacing: 9) {
-                    ForEach(GraphicsAPI.allCases, id: \.self) { api in
-                        APICard(api: api, selected: selectedAPI == api)
-                            .onTapGesture { selectedAPI = api }
+                VStack(spacing: 8) {
+                    ForEach(BottlePreset.allCases, id: \.self) { preset in
+                        PresetRow(preset: preset, selected: selectedPreset == preset)
+                            .onTapGesture {
+                                selectedPreset = preset
+                                if name.isEmpty || BottlePreset.allCases.contains(where: { $0.defaultName == name }) {
+                                    name = preset.defaultName
+                                }
+                            }
                     }
                 }
 
-                // quick setup
-                Text("Quick setup")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.t2)
-                    .padding(.top, 20)
-                    .padding(.bottom, 8)
-
-                HStack(spacing: 9) {
-                    ForEach(GamePreset.allCases, id: \.self) { preset in
-                        PresetCard(preset: preset, selected: selectedPreset == preset)
-                            .onTapGesture { selectedPreset = preset }
+                // Advanced toggle
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showAdvanced.toggle() } }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: showAdvanced ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Advanced options")
+                            .font(.system(size: 12, weight: .semibold))
                     }
+                    .foregroundStyle(Color.t3)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 16)
+
+                if showAdvanced {
+                    VStack(alignment: .leading, spacing: 10) {
+                        // Renderer picker
+                        HStack {
+                            Text("Renderer")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Color.t2)
+                                .frame(width: 80, alignment: .leading)
+                            Picker("", selection: $selectedRenderer) {
+                                Text("DXVK (DX9/10/11 → Vulkan)").tag(Renderer.dxvk)
+                                Text("D3DMetal (DX12 → Metal)").tag(Renderer.metal)
+                                Text("OpenGL (legacy)").tag(Renderer.gl)
+                            }
+                            .pickerStyle(.menu)
+                            .tint(Color.t1)
+                        }
+
+                        Toggle(isOn: $esync) {
+                            Text("ESync  ")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Color.t2)
+                        }
+                        .toggleStyle(.switch)
+                        .tint(Color.accent)
+
+                        Toggle(isOn: $msync) {
+                            Text("MSync  ")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Color.t2)
+                        }
+                        .toggleStyle(.switch)
+                        .tint(Color.accent)
+                    }
+                    .padding(14)
+                    .background(Color.white.opacity(0.04))
+                    .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.stroke, lineWidth: 0.5))
+                    .clipShape(RoundedRectangle(cornerRadius: 9))
+                    .padding(.top, 8)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
+                // Error
+                if let err = errorMessage ?? bottleVM.error {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.statusAmber)
+                        Text(err)
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.statusAmber)
+                    }
+                    .padding(.top, 12)
                 }
             }
             .padding(28)
 
-            // footer
+            // Footer
             HStack {
-                Text("Stored in ~/Library/Bottles · ~480 MB")
+                Text(StorageManager.shared.isExternalSSDMounted ? "SSD externo · /barrel-data/bottles" : "~/Library/Barrel/bottles")
                     .font(.system(size: 11.5))
                     .foregroundStyle(Color.t3)
                 Spacer()
+
                 Button("Cancel") { isPresented = false }
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.t1)
@@ -109,129 +156,107 @@ struct CreateBottleSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .buttonStyle(.plain)
 
-                Button(action: { isPresented = false }) {
+                Button(action: createBottle) {
                     HStack(spacing: 7) {
-                        Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
-                        Text("Create Bottle").font(.system(size: 13, weight: .semibold))
+                        if bottleVM.isLoading {
+                            ProgressView().progressViewStyle(.circular).scaleEffect(0.7).tint(.white)
+                            Text("Creating…")
+                        } else {
+                            Image(systemName: "plus").font(.system(size: 12, weight: .semibold))
+                            Text("Create Bottle")
+                        }
                     }
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(height: 32)
                     .padding(.horizontal, 18)
                     .background(LinearGradient.accent)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .shadow(color: Color(hex: "#7c5cff").opacity(0.4), radius: 8, y: 2)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
-                            .blendMode(.plusLighter)
-                    )
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.3), lineWidth: 0.5).blendMode(.plusLighter))
                 }
                 .buttonStyle(.plain)
+                .disabled(bottleVM.isLoading || displayName.isEmpty)
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 14)
             .background(Color.black.opacity(0.22))
-            .overlay(alignment: .top) {
-                Rectangle().fill(Color.stroke).frame(height: 0.5)
-            }
+            .overlay(alignment: .top) { Rectangle().fill(Color.stroke).frame(height: 0.5) }
         }
-        .background(
-            Color(hex: "#2c2c30").opacity(0.9)
-                .background(.ultraThickMaterial)
-        )
+        .background(Color(hex: "#2c2c30").opacity(0.9).background(.ultraThickMaterial))
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.stroke2, lineWidth: 0.5)
-        )
-        .frame(width: 560)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.stroke2, lineWidth: 0.5))
+        .frame(width: 520)
         .shadow(color: .black.opacity(0.6), radius: 70, y: 30)
+        .onAppear {
+            name = selectedPreset.defaultName
+        }
     }
-}
 
-struct APICard: View {
-    let api: CreateBottleSheet.GraphicsAPI
-    let selected: Bool
+    private var displayName: String { name.trimmingCharacters(in: .whitespaces) }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topTrailing) {
-                VStack(alignment: .leading, spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(selected ? Color(hex: "#8b6bff").opacity(0.3) : Color.white.opacity(0.08))
-                            .frame(width: 28, height: 28)
-                        Image(systemName: api.icon)
-                            .font(.system(size: 14))
-                            .foregroundStyle(.white)
-                    }
-                    Text(api.label)
-                        .font(.system(size: 13.5, weight: .bold))
-                        .tracking(-0.1)
-                        .foregroundStyle(Color.t1)
-                    Text(api.sublabel)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.t2)
-                }
-                .padding(13)
-
-                if selected {
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color(hex: "#8b6bff"))
-                        .padding(11)
-                }
+    private func createBottle() {
+        errorMessage = nil
+        let renderer = showAdvanced ? selectedRenderer : selectedPreset.defaultRenderer
+        let config = BottleConfig(arch: .win64, renderer: renderer, esync: esync, msync: msync)
+        Task {
+            if await bottleVM.createWithPreset(name: displayName, config: config, preset: selectedPreset) != nil {
+                isPresented = false
+            } else {
+                errorMessage = bottleVM.error ?? "Falha ao criar garrafa. Wine instalado?"
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            selected
-                ? LinearGradient.accentSoft
-                : LinearGradient(colors: [Color.white.opacity(0.045)], startPoint: .top, endPoint: .bottom)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 11)
-                .stroke(
-                    selected ? Color(hex: "#8b6bff").opacity(0.55) : Color.stroke,
-                    lineWidth: selected ? 1 : 0.5
-                )
-                .overlay(
-                    selected ? RoundedRectangle(cornerRadius: 11).stroke(Color(hex: "#8b6bff").opacity(0.4), lineWidth: 0.5) : nil
-                )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 11))
     }
 }
 
-struct PresetCard: View {
-    let preset: CreateBottleSheet.GamePreset
+// MARK: - Preset row
+
+struct PresetRow: View {
+    let preset: BottlePreset
     let selected: Bool
 
     var body: some View {
-        VStack(spacing: 7) {
+        HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(preset.gradient)
-                    .frame(width: 36, height: 36)
+                    .fill(LinearGradient(
+                        colors: [Color(hex: preset.gradient.start), Color(hex: preset.gradient.end)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 40, height: 40)
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.12), lineWidth: 0.5))
                 Image(systemName: preset.icon)
-                    .font(.system(size: 17))
+                    .font(.system(size: 18))
                     .foregroundStyle(.white)
             }
-            Text(preset.label)
-                .font(.system(size: 12.5, weight: .bold))
-                .foregroundStyle(selected ? .white : Color.t1)
-            Text(preset.subtitle)
-                .font(.system(size: 10))
-                .foregroundStyle(Color.t3)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(preset.label)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.t1)
+                Text(preset.subtitle)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.t2)
+            }
+
+            Spacer()
+
+            if selected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(Color.accent)
+            } else {
+                Circle()
+                    .stroke(Color.stroke2, lineWidth: 1.5)
+                    .frame(width: 18, height: 18)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .padding(.horizontal, 8)
-        .background(selected ? Color.white.opacity(0.08) : Color.white.opacity(0.045))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(selected ? Color(hex: "#8b6bff").opacity(0.10) : Color.white.opacity(0.04))
         .overlay(
-            RoundedRectangle(cornerRadius: 11)
-                .stroke(selected ? Color.stroke3 : Color.stroke, lineWidth: selected ? 1 : 0.5)
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(selected ? Color(hex: "#8b6bff").opacity(0.4) : Color.stroke, lineWidth: selected ? 1 : 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 11))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }

@@ -30,14 +30,10 @@ actor BottleService {
         return bottles.sorted { $0.createdAt < $1.createdAt }
     }
 
-    func create(name: String, config: BottleConfig = .default) async throws -> Bottle {
-        let bottle = Bottle(name: name, config: config)
-        let bottleDir = StorageManager.shared.bottlesDirectory.appending(path: bottle.id.uuidString)
-
+    func create(name: String, config: BottleConfig = .default, preset: BottlePreset? = nil) async throws -> Bottle {
+        let bottle = Bottle(name: name, config: config, preset: preset)
         try FileManager.default.createDirectory(at: bottle.prefixURL, withIntermediateDirectories: true)
-        try await WineService.shared.bootPrefix(bottle.prefixURL)
         try save(bottle)
-
         bottles.append(bottle)
         return bottle
     }

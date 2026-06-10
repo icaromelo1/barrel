@@ -10,12 +10,21 @@ struct WineBuild: Codable, Identifiable {
         StorageManager.shared.wineDirectory.appending(path: "wine-\(version)")
     }
 
-    var isInstalled: Bool {
-        FileManager.default.fileExists(atPath: localURL.appending(path: "bin/wine64").path)
+    // Gcenx builds are macOS .app bundles: Contents/Resources/wine/bin/wine
+    var wineBinary: URL {
+        localURL.appending(path: "Contents/Resources/wine/bin/wine")
     }
 
-    var wineBinary: URL {
-        localURL.appending(path: "bin/wine64")
+    var wineLibPath: String {
+        localURL.appending(path: "Contents/Resources/wine/lib").path
+    }
+
+    var wineBinPath: String {
+        localURL.appending(path: "Contents/Resources/wine/bin").path
+    }
+
+    var isInstalled: Bool {
+        FileManager.default.fileExists(atPath: wineBinary.path)
     }
 }
 

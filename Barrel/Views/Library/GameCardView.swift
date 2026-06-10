@@ -2,6 +2,10 @@ import SwiftUI
 
 struct GameCardView: View {
     let game: GameData
+    var isRunning: Bool = false
+    var onLaunch: () -> Void = {}
+
+    @State private var isHovered = false
 
     var body: some View {
         VStack(spacing: 10) {
@@ -16,16 +20,18 @@ struct GameCardView: View {
                     )
 
                 // genre badge
-                Text(game.genre)
-                    .font(.system(size: 9, weight: .bold))
-                    .tracking(0.6)
-                    .textCase(.uppercase)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(Color.black.opacity(0.4).background(.ultraThinMaterial))
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
-                    .padding(9)
+                if !game.genre.isEmpty {
+                    Text(game.genre)
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(0.6)
+                        .textCase(.uppercase)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color.black.opacity(0.4).background(.ultraThinMaterial))
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                        .padding(9)
+                }
 
                 // title gradient at bottom
                 VStack {
@@ -47,7 +53,44 @@ struct GameCardView: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // Hover overlay with play button
+                if isHovered || isRunning {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(isRunning ? 0.5 : 0.38))
+                        .overlay {
+                            if isRunning {
+                                VStack(spacing: 6) {
+                                    ProgressView().tint(.white).scaleEffect(0.9)
+                                    Text("Running")
+                                        .font(.system(size: 10, weight: .semibold))
+                                        .foregroundStyle(.white.opacity(0.8))
+                                }
+                            } else {
+                                Button(action: onLaunch) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.18))
+                                            .frame(width: 46, height: 46)
+                                        Circle()
+                                            .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                                            .frame(width: 46, height: 46)
+                                        Image(systemName: "play.fill")
+                                            .font(.system(size: 18, weight: .bold))
+                                            .foregroundStyle(.white)
+                                            .offset(x: 2)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .transition(.opacity)
+                }
             }
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .scaleEffect(isHovered && !isRunning ? 1.03 : 1.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isHovered)
+            .onHover { isHovered = $0 }
 
             // metadata below card
             HStack(alignment: .top) {

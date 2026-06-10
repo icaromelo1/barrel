@@ -14,6 +14,45 @@ struct GameData: Identifiable {
     enum Motif { case peak, grid, orbit, slash, ring, bolt }
 }
 
+// MARK: - Factory from real Game model
+
+extension GameData {
+    private static let palettes: [(Color, Color, Color)] = [
+        (Color(hex: "#2a0d08"), Color(hex: "#b3401c"), Color(hex: "#ff7a2f")),
+        (Color(hex: "#10052e"), Color(hex: "#5b1fb0"), Color(hex: "#ff3da6")),
+        (Color(hex: "#04140d"), Color(hex: "#0f6b43"), Color(hex: "#5ad18a")),
+        (Color(hex: "#0a1422"), Color(hex: "#274b73"), Color(hex: "#7fb2e6")),
+        (Color(hex: "#070a1e"), Color(hex: "#2d2a8c"), Color(hex: "#6ad0ff")),
+        (Color(hex: "#0c0a18"), Color(hex: "#3a3470"), Color(hex: "#b9a7ff")),
+        (Color(hex: "#161200"), Color(hex: "#9a7a00"), Color(hex: "#ffe23d")),
+        (Color(hex: "#1a0510"), Color(hex: "#7a0f33"), Color(hex: "#ff5a7a")),
+    ]
+    private static let glows: [Color] = [
+        Color(hex: "#ff5e1e"), Color(hex: "#ff3da6"), Color(hex: "#3fd17e"),
+        Color(hex: "#5c93d6"), Color(hex: "#6ad0ff"), Color(hex: "#9b86ff"),
+        Color(hex: "#ffd21e"), Color(hex: "#ff3f63"),
+    ]
+    private static let motifs: [Motif] = [.peak, .grid, .orbit, .slash, .ring, .bolt, .peak, .orbit]
+
+    static func from(_ game: Game, bottle: Bottle?) -> GameData {
+        let h = abs(game.id.uuidString.hashValue)
+        let p = palettes[h % palettes.count]
+        return GameData(
+            id: game.id.uuidString,
+            title: game.name.uppercased(),
+            genre: "",
+            bottleColor: Color(hex: "#8b6bff"),
+            bottleName: bottle?.name ?? "Unknown",
+            palette: p,
+            glowColor: glows[h % glows.count],
+            motif: motifs[h % motifs.count],
+            titleSize: CGFloat(18 + (h % 14))
+        )
+    }
+}
+
+// MARK: - Sample data (only for SwiftUI previews, never shown in production UI)
+
 let sampleGames: [GameData] = [
     GameData(id: "ashfall",   title: "ASHFALL",        genre: "Survival",     bottleColor: Color(hex: "#8b6bff"), bottleName: "Gaming",   palette: (Color(hex: "#2a0d08"), Color(hex: "#b3401c"), Color(hex: "#ff7a2f")), glowColor: Color(hex: "#ff5e1e"), motif: .peak,  titleSize: 30),
     GameData(id: "neondrift", title: "NEON DRIFT",     genre: "Racing",       bottleColor: Color(hex: "#34c759"), bottleName: "Arcade",   palette: (Color(hex: "#10052e"), Color(hex: "#5b1fb0"), Color(hex: "#ff3da6")), glowColor: Color(hex: "#ff3da6"), motif: .grid,  titleSize: 23),
@@ -84,7 +123,7 @@ struct MotifView: View {
 
             case .grid:
                 for i in 0..<5 {
-                    let y = (36 + i * 13) * scaleY
+                    let y = (36 + CGFloat(i) * 13) * scaleY
                     var line = Path()
                     line.move(to: CGPoint(x: 6 * scaleX, y: y))
                     line.addLine(to: CGPoint(x: 94 * scaleX, y: y))
@@ -92,8 +131,8 @@ struct MotifView: View {
                 }
                 for i in -2...2 {
                     var line = Path()
-                    line.move(to: CGPoint(x: (50 + i * 9) * scaleX, y: 36 * scaleY))
-                    line.addLine(to: CGPoint(x: (50 + i * 34) * scaleX, y: 94 * scaleY))
+                    line.move(to: CGPoint(x: (50 + CGFloat(i) * 9) * scaleX, y: 36 * scaleY))
+                    line.addLine(to: CGPoint(x: (50 + CGFloat(i) * 34) * scaleX, y: 94 * scaleY))
                     ctx.stroke(line, with: .color(c.opacity(0.4)), lineWidth: 1.4)
                 }
 

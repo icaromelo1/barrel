@@ -1,33 +1,29 @@
 import SwiftUI
 
-enum AppRoute: Hashable {
-    case library
-    case dependencies
-    case gameDetail
-}
-
 struct ContentView: View {
-    @State private var selectedBottle: String? = nil
-    @State private var route: AppRoute = .library
+    @StateObject private var bottleVM = BottleViewModel()
+    @StateObject private var libraryVM = LibraryViewModel()
+    @StateObject private var wineSetup = WineSetupViewModel()
+
+    @State private var selectedBottleId: String? = nil
 
     var body: some View {
-        HStack(spacing: 0) {
-            BottleSidebarView(selectedBottle: $selectedBottle)
-
-            ZStack {
-                switch route {
-                case .library:
-                    LibraryView(selectedBottle: $selectedBottle)
-                case .dependencies:
-                    DependencyListView()
-                case .gameDetail:
-                    GameDetailView()
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        NavigationSplitView {
+            BottleSidebarView(selectedBottle: $selectedBottleId)
+                .environmentObject(bottleVM)
+                .environmentObject(wineSetup)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 248, max: 300)
+        } detail: {
+            LibraryView(
+                selectedBottle: $selectedBottleId,
+                libraryVM: libraryVM,
+                bottleVM: bottleVM
+            )
         }
-        .background(WallpaperView().ignoresSafeArea())
-        .frame(minWidth: 1100, minHeight: 700)
+        .task { await bottleVM.load() }
+        .task { await libraryVM.load() }
+        .task { await wineSetup.setup() }
+        .frame(minWidth: 1000, minHeight: 640)
         .preferredColorScheme(.dark)
     }
 }

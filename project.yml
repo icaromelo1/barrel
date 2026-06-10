@@ -21,6 +21,8 @@ targets:
     platform: macOS
     sources:
       - Barrel
+      - path: Tools/steamwebhelper_wrapper.exe
+        type: resource
     settings:
       base:
         INFOPLIST_FILE: Barrel/Resources/Info.plist

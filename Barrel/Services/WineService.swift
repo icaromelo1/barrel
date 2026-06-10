@@ -22,7 +22,7 @@ actor WineService {
         let process = Process()
         process.executableURL = build.wineBinary
         process.arguments = args
-        process.environment = buildEnvironment(prefix: prefix, extra: extraEnv)
+        process.environment = buildEnvironment(build: build, prefix: prefix, extra: extraEnv)
 
         let pipe = Pipe()
         let errPipe = Pipe()
@@ -90,11 +90,23 @@ actor WineService {
         return build
     }
 
-    private func buildEnvironment(prefix: URL, extra: [String: String]) -> [String: String] {
+    private func buildEnvironment(build: WineBuild, prefix: URL, extra: [String: String]) -> [String: String] {
         var env = ProcessInfo.processInfo.environment
+
+        // Wine lib path must be set so the inner wine binary finds its .dylibs
+        let existingDyld = env["DYLD_FALLBACK_LIBRARY_PATH"] ?? ""
+        let libPath = existingDyld.isEmpty ? build.wineLibPath : "\(build.wineLibPath):\(existingDyld)"
+        env["DYLD_FALLBACK_LIBRARY_PATH"] = libPath
+
+        // Wine bin dir must be on PATH so wine can locate wineserver
+        let existingPath = env["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"
+        env["PATH"] = "\(build.wineBinPath):\(existingPath)"
+
         env["WINEPREFIX"] = prefix.path
-        env["WINEDEBUG"] = "-all"           // silencia logs verbose do Wine
-        env["WINEDLLOVERRIDES"] = "winemenubuilder.exe=d"
+        env["WINEDEBUG"] = "-all"
+        // winemenubuilder: prevents Wine from creating .desktop shortcuts
+        // steamservice: prevents non-fatal crash dialog during Steam install
+        env["WINEDLLOVERRIDES"] = "winemenubuilder.exe=d;steamservice.exe=d"
         env["WINE_LARGE_ADDRESS_AWARE"] = "1"
         for (key, value) in extra { env[key] = value }
         return env

@@ -21,8 +21,8 @@ actor GameService {
         return games
     }
 
-    func add(name: String, exePath: String, bottleId: UUID) throws -> Game {
-        let game = Game(name: name, exePath: exePath, bottleId: bottleId)
+    func add(name: String, exePath: String, bottleId: UUID, launchArgs: String = "") throws -> Game {
+        let game = Game(name: name, exePath: exePath, bottleId: bottleId, launchArgs: launchArgs)
         games.append(game)
         try persist()
         return game

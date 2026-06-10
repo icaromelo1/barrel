@@ -3,6 +3,33 @@ import Foundation
 actor DependencyService {
     static let shared = DependencyService()
 
+    // MARK: - Preset auto-install
+
+    func installForPreset(
+        _ preset: BottlePreset,
+        in bottle: Bottle,
+        onStatus: @escaping @Sendable (String) async -> Void
+    ) async {
+        for depId in preset.depIds {
+            await onStatus("Instalando \(depId)...")
+            do {
+                if depId == "dxvk" {
+                    let stream = try await installDXVK(in: bottle)
+                    for await _ in stream {}
+                } else {
+                    let stream = try runWinetricks(verb: depId, in: bottle)
+                    for await _ in stream {}
+                }
+            } catch DependencyError.winetricksNotFound {
+                await onStatus("⚠️ winetricks não encontrado — instale com: brew install winetricks")
+                return
+            } catch {
+                await onStatus("Erro em \(depId): \(error.localizedDescription)")
+            }
+        }
+        await onStatus("Pronto.")
+    }
+
     // MARK: - Instalação via Winetricks
 
     func install(_ dependency: Dependency, in bottle: Bottle) async throws -> AsyncStream<LogEntry> {

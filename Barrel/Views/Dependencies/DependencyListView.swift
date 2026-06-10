@@ -1,33 +1,24 @@
 import SwiftUI
 
-struct ComponentData: Identifiable {
-    let id: String
-    let name: String
-    let version: String
-    let description: String
-    let icon: String
-    let gradient: LinearGradient
-    let state: ComponentState
-
-    enum ComponentState { case installed, installing(Int), available }
-}
-
-let sampleComponents: [ComponentData] = [
-    ComponentData(id: "dxvk",   name: "DXVK",                version: "v2.4",       description: "Direct3D 9/10/11 translated to Vulkan for native-speed rendering.", icon: "cube.transparent",        gradient: .init(colors: [Color(hex: "#9a6bff"), Color(hex: "#6f54f0")], startPoint: .topLeading, endPoint: .bottomTrailing), state: .installed),
-    ComponentData(id: "vkd3d",  name: "VKD3D-Proton",         version: "v2.13",      description: "Direct3D 12 over Vulkan — required by this DX12 bottle.", icon: "cube",                     gradient: .init(colors: [Color(hex: "#4aa3ff"), Color(hex: "#2f6bd6")], startPoint: .topLeading, endPoint: .bottomTrailing), state: .installed),
-    ComponentData(id: "vcredist",name: "Visual C++ Redist",   version: "2015–2022",  description: "Microsoft runtime libraries most Windows games link against.", icon: "shippingbox",              gradient: .init(colors: [Color(hex: "#ff8a3d"), Color(hex: "#ff5a52")], startPoint: .topLeading, endPoint: .bottomTrailing), state: .installed),
-    ComponentData(id: "dotnet", name: ".NET Desktop Runtime", version: "8.0",        description: "Framework runtime for managed launchers and tools.", icon: "chevron.left.forwardslash.chevron.right", gradient: .init(colors: [Color(hex: "#8b6bff"), Color(hex: "#b06bff")], startPoint: .topLeading, endPoint: .bottomTrailing), state: .installing(64)),
-    ComponentData(id: "dx",     name: "DirectX End-User",     version: "Jun 2010",   description: "Legacy D3DX, XAudio and XInput components.", icon: "display",                  gradient: .init(colors: [Color(hex: "#34c7c0"), Color(hex: "#2aa39c")], startPoint: .topLeading, endPoint: .bottomTrailing), state: .available),
-    ComponentData(id: "mf",     name: "Media Foundation",     version: "—",          description: "Codecs for in-engine video cutscene playback.", icon: "bolt",                     gradient: .init(colors: [Color(hex: "#ffb340"), Color(hex: "#ff8a3d")], startPoint: .topLeading, endPoint: .bottomTrailing), state: .available),
-]
 
 struct DependencyListView: View {
+    let bottle: Bottle
+    @StateObject private var depVM = DependencyViewModel()
+
+    private var rendererLabel: String {
+        switch bottle.config.renderer {
+        case .dxvk:  return "DXVK (DX9/10/11)"
+        case .metal: return "D3DMetal (DX12)"
+        case .gl:    return "OpenGL"
+        }
+    }
+
     var body: some View {
         ZStack {
             Color.contentBg.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                DependencyToolbar()
+                DependencyToolbar(bottle: bottle)
 
                 // bottle hero
                 VStack(alignment: .leading, spacing: 0) {
@@ -50,15 +41,17 @@ struct DependencyListView: View {
                         }
 
                         VStack(alignment: .leading, spacing: 7) {
-                            Text("Gaming")
+                            Text(bottle.name)
                                 .font(.system(size: 23, weight: .bold))
                                 .tracking(-0.5)
                                 .foregroundStyle(Color.t1)
 
                             HStack(spacing: 8) {
-                                SpecChip(icon: "display", text: "DirectX 12")
-                                SpecChip(icon: "square.stack.3d.up", text: "Windows 11 · 64-bit")
-                                SpecChip(icon: "cpu", text: "Wine 9.0")
+                                SpecChip(icon: "display", text: rendererLabel)
+                                SpecChip(icon: "square.stack.3d.up", text: "Windows 11 · \(bottle.config.arch.rawValue)")
+                                if !bottle.wineVersion.isEmpty {
+                                    SpecChip(icon: "cpu", text: "Wine \(bottle.wineVersion)")
+                                }
                             }
                         }
                         Spacer()
@@ -90,14 +83,11 @@ struct DependencyListView: View {
                                 .textCase(.uppercase)
                                 .foregroundStyle(Color.t3)
                             Spacer()
-                            Text("4 of 6 installed · last sync 2m ago")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(Color.t3)
                         }
 
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
-                            ForEach(sampleComponents) { c in
-                                ComponentCard(component: c)
+                            ForEach(Dependency.all) { dep in
+                                DependencyCard(dep: dep, bottle: bottle, depVM: depVM)
                             }
                         }
                     }
@@ -109,22 +99,18 @@ struct DependencyListView: View {
 }
 
 struct DependencyToolbar: View {
+    let bottle: Bottle
+
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: "sidebar.left").font(.system(size: 17)).foregroundStyle(Color.t2).frame(width: 30, height: 30)
             VStack(alignment: .leading, spacing: 1) {
-                Text("Gaming").font(.system(size: 15, weight: .semibold)).tracking(-0.1).foregroundStyle(Color.t1)
-                Text("Bottle · 6 games").font(.system(size: 12, weight: .medium)).foregroundStyle(Color.t3)
+                Text(bottle.name).font(.system(size: 15, weight: .semibold)).tracking(-0.1).foregroundStyle(Color.t1)
+                Text("Bottle · \(bottle.games.count) games").font(.system(size: 12, weight: .medium)).foregroundStyle(Color.t3)
             }
             Spacer()
             Image(systemName: "folder").font(.system(size: 16)).foregroundStyle(Color.t2).frame(width: 30, height: 30)
             Image(systemName: "ellipsis").font(.system(size: 17)).foregroundStyle(Color.t2).frame(width: 30, height: 30)
-            HStack(spacing: 7) {
-                Image(systemName: "plus").font(.system(size: 13, weight: .semibold))
-                Text("Add Game").font(.system(size: 13, weight: .semibold)).tracking(-0.1)
-            }
-            .foregroundStyle(.white).frame(height: 30).padding(.horizontal, 14)
-            .background(LinearGradient.accent).clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .frame(height: 52).padding(.horizontal, 18)
         .background(Color(hex: "#1c1c1f").opacity(0.72).background(.ultraThinMaterial))
@@ -171,35 +157,53 @@ struct TabItem: View {
     }
 }
 
-struct ComponentCard: View {
-    let component: ComponentData
+
+// MARK: - Real Dependency Card (wired to DependencyViewModel)
+
+struct DependencyCard: View {
+    let dep: Dependency
+    let bottle: Bottle
+    @ObservedObject var depVM: DependencyViewModel
+
+    private var isInstalling: Bool { depVM.installingId == dep.id }
+    private var isInstalled: Bool { depVM.isInstalled(dep) }
+
+    private var icon: String {
+        switch dep.type {
+        case .graphics: return "cube.transparent"
+        case .runtime:  return "shippingbox"
+        case .font:     return "textformat"
+        case .other:    return "puzzlepiece"
+        }
+    }
+
+    private var gradient: LinearGradient {
+        switch dep.type {
+        case .graphics: return .init(colors: [Color(hex: "#9a6bff"), Color(hex: "#6f54f0")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .runtime:  return .init(colors: [Color(hex: "#ff8a3d"), Color(hex: "#ff5a52")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .font:     return .init(colors: [Color(hex: "#34c7c0"), Color(hex: "#2aa39c")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .other:    return .init(colors: [Color(hex: "#4aa3ff"), Color(hex: "#2f6bd6")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        }
+    }
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 11)
-                    .fill(component.gradient)
+                    .fill(gradient)
                     .frame(width: 44, height: 44)
                     .overlay(RoundedRectangle(cornerRadius: 11).stroke(Color.white.opacity(0.12), lineWidth: 0.5))
-                Image(systemName: component.icon)
+                Image(systemName: icon)
                     .font(.system(size: 20))
                     .foregroundStyle(.white)
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 8) {
-                    Text(component.name)
-                        .font(.system(size: 14.5, weight: .bold))
-                        .tracking(-0.1)
-                        .foregroundStyle(Color.t1)
-                    Text(component.version)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.t3)
-                        .padding(.horizontal, 6).padding(.vertical, 1)
-                        .background(Color.white.opacity(0.07))
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
-                }
-                Text(component.description)
+                Text(dep.displayName)
+                    .font(.system(size: 14.5, weight: .bold))
+                    .tracking(-0.1)
+                    .foregroundStyle(Color.t1)
+                Text(dep.description)
                     .font(.system(size: 12))
                     .foregroundStyle(Color.t2)
                     .lineLimit(2)
@@ -208,21 +212,17 @@ struct ComponentCard: View {
 
             Spacer()
 
-            ComponentActionView(state: component.state)
+            depActionView
         }
         .padding(16)
         .background(Color.card)
         .overlay(RoundedRectangle(cornerRadius: 13).stroke(Color.stroke, lineWidth: 0.5))
         .clipShape(RoundedRectangle(cornerRadius: 13))
     }
-}
 
-struct ComponentActionView: View {
-    let state: ComponentData.ComponentState
-
-    var body: some View {
-        switch state {
-        case .installed:
+    @ViewBuilder
+    private var depActionView: some View {
+        if isInstalled {
             HStack(spacing: 5) {
                 Image(systemName: "checkmark").font(.system(size: 11, weight: .bold))
                 Text("Installed").font(.system(size: 12, weight: .semibold))
@@ -231,37 +231,37 @@ struct ComponentActionView: View {
             .frame(height: 26).padding(.horizontal, 11)
             .background(Color.statusGreen.opacity(0.14))
             .clipShape(RoundedRectangle(cornerRadius: 7))
-
-        case .installing(let pct):
+        } else if isInstalling {
             VStack(alignment: .trailing, spacing: 8) {
-                HStack(spacing: 5) {
-                    Text("Installing… \(pct)%").font(.system(size: 12, weight: .semibold))
-                }
-                .foregroundStyle(Color.statusAmber)
-                .frame(height: 26).padding(.horizontal, 11)
-                .background(Color.statusAmber.opacity(0.14))
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+                Text("Installing…").font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.statusAmber)
+                    .frame(height: 26).padding(.horizontal, 11)
+                    .background(Color.statusAmber.opacity(0.14))
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 3).fill(Color.white.opacity(0.12)).frame(height: 5)
                         RoundedRectangle(cornerRadius: 3).fill(Color.statusAmber)
-                            .frame(width: geo.size.width * CGFloat(pct) / 100, height: 5)
+                            .frame(width: geo.size.width * CGFloat(depVM.installProgress) / 100, height: 5)
                     }
                 }
                 .frame(width: 96, height: 5)
             }
-
-        case .available:
-            HStack(spacing: 5) {
-                Image(systemName: "arrow.down").font(.system(size: 11, weight: .semibold))
-                Text("Install").font(.system(size: 12, weight: .semibold))
+        } else {
+            Button(action: { Task { await depVM.install(dep, into: bottle) } }) {
+                HStack(spacing: 5) {
+                    Image(systemName: "arrow.down").font(.system(size: 11, weight: .semibold))
+                    Text("Install").font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundStyle(Color.t1)
+                .frame(height: 26).padding(.horizontal, 11)
+                .background(Color.white.opacity(0.10))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.stroke2, lineWidth: 0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 7))
             }
-            .foregroundStyle(Color.t1)
-            .frame(height: 26).padding(.horizontal, 11)
-            .background(Color.white.opacity(0.10))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.stroke2, lineWidth: 0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 7))
+            .buttonStyle(.plain)
+            .disabled(depVM.installingId != nil)
         }
     }
 }
