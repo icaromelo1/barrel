@@ -421,13 +421,20 @@ struct InstallAppSheet: View {
                         if let game { libraryVM.appendGame(game) }
                     }
                 } else if isCustom && !customAppName.isEmpty {
-                    let game = try? await GameService.shared.add(
-                        name: customAppName,
-                        exePath: customInstallerPath,
-                        bottleId: bottleId,
-                        launchArgs: ""
-                    )
-                    if let game { libraryVM.appendGame(game) }
+                    // The installer's own path is NOT the game's exe — ask the user
+                    // to point at the actual executable installed inside the bottle.
+                    installStatus = "Selecione o executável do jogo instalado…"
+                    let driveC = bottle.prefixURL.appending(path: "drive_c")
+                    if let exeURL = await libraryVM.pickExeFile(startingAt: driveC) {
+                        let winPath = Self.windowsPath(fromMacPath: exeURL.path, driveC: driveC.path)
+                        let game = try? await GameService.shared.add(
+                            name: customAppName,
+                            exePath: winPath,
+                            bottleId: bottleId,
+                            launchArgs: ""
+                        )
+                        if let game { libraryVM.appendGame(game) }
+                    }
                 }
 
                 isPresented = false
@@ -439,41 +446,30 @@ struct InstallAppSheet: View {
         }
     }
 
+    /// Converts an absolute macOS path (inside a bottle's drive_c) into a Windows-style
+    /// path (e.g. "C:\Program Files\Game\game.exe") so Wine can launch it later.
+    private static func windowsPath(fromMacPath macPath: String, driveC: String) -> String {
+        guard macPath.hasPrefix(driveC) else { return macPath }
+        let relative = macPath
+            .dropFirst(driveC.count)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        return "C:\\" + relative.replacingOccurrences(of: "/", with: "\\")
+    }
+
     private func downloadInstaller() async throws -> String {
         if isCustom { return customInstallerPath }
         guard let app = selectedApp else { throw BarrelError.downloadFailed }
-
         guard let url = URL(string: app.installerURL) else { throw BarrelError.downloadFailed }
-        var request = URLRequest(url: url)
-        request.setValue("Barrel/1.0 macOS", forHTTPHeaderField: "User-Agent")
 
         installStatus = "Baixando \(app.name)..."
         let filename = url.lastPathComponent.isEmpty ? "\(app.id)-installer.exe" : url.lastPathComponent
         let dest = StorageManager.shared.cacheDirectory.appending(path: filename)
 
-        let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw BarrelError.downloadFailed }
-
-        let total = response.expectedContentLength
-        FileManager.default.createFile(atPath: dest.path, contents: nil)
-        let handle = try FileHandle(forWritingTo: dest)
-
-        var buf = Data(capacity: 512 * 1024)
-        var received: Int64 = 0
-        for try await byte in asyncBytes {
-            buf.append(byte)
-            received += 1
-            if buf.count >= 512 * 1024 {
-                try handle.write(contentsOf: buf)
-                buf.removeAll(keepingCapacity: true)
-                if total > 0 {
-                    let p = Double(received) / Double(total)
-                    await MainActor.run { installProgress = p }
-                }
-            }
+        let tempURL = try await DownloadService.shared.downloadFile(from: url) { p in
+            Task { @MainActor in installProgress = p }
         }
-        if !buf.isEmpty { try handle.write(contentsOf: buf) }
-        try handle.close()
+        try? FileManager.default.removeItem(at: dest)
+        try FileManager.default.moveItem(at: tempURL, to: dest)
         return dest.path
     }
 }

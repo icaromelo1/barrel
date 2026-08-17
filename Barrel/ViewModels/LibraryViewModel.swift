@@ -47,7 +47,7 @@ final class LibraryViewModel: ObservableObject {
     // MARK: - File picker
 
     @discardableResult
-    func pickExeFile() async -> URL? {
+    func pickExeFile(startingAt directory: URL? = nil) async -> URL? {
         await withCheckedContinuation { continuation in
             DispatchQueue.main.async {
                 let panel = NSOpenPanel()
@@ -55,6 +55,7 @@ final class LibraryViewModel: ObservableObject {
                 panel.allowedContentTypes = [UTType(filenameExtension: "exe") ?? .data]
                 panel.allowsMultipleSelection = false
                 panel.canChooseDirectories = false
+                if let directory { panel.directoryURL = directory }
                 if panel.runModal() == .OK {
                     continuation.resume(returning: panel.url)
                 } else {

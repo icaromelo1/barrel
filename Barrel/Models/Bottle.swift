@@ -60,6 +60,7 @@ struct Bottle: Identifiable, Codable {
     var initStatus: BottleInitStatus
     var createdAt: Date
     var games: [UUID]
+    var installedDependencyIds: [String]
 
     init(id: UUID = UUID(), name: String, wineVersion: String = "",
          config: BottleConfig = .default, preset: BottlePreset? = nil) {
@@ -71,6 +72,7 @@ struct Bottle: Identifiable, Codable {
         self.initStatus = .pending
         self.createdAt = Date()
         self.games = []
+        self.installedDependencyIds = []
     }
 
     var prefixURL: URL {
@@ -96,6 +98,7 @@ struct Bottle: Identifiable, Codable {
         initStatus = try c.decodeIfPresent(BottleInitStatus.self, forKey: .initStatus) ?? .ready
         createdAt  = try c.decode(Date.self, forKey: .createdAt)
         games      = try c.decodeIfPresent([UUID].self, forKey: .games) ?? []
+        installedDependencyIds = try c.decodeIfPresent([String].self, forKey: .installedDependencyIds) ?? []
     }
 }
 

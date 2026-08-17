@@ -4,9 +4,12 @@ struct LibraryView: View {
     @Binding var selectedBottle: String?
     @ObservedObject var libraryVM: LibraryViewModel
     @ObservedObject var bottleVM: BottleViewModel
+    var searchText: String = ""
+    var onOpenComponents: (() -> Void)? = nil
     @State private var showInstallApp = false
     @State private var runningGames: Set<UUID> = []
     @State private var gameToDelete: Game? = nil
+    @State private var selectedGameId: UUID? = nil
 
     var selectedBottleObj: Bottle? {
         guard let id = selectedBottle, let uuid = UUID(uuidString: id) else { return nil }
@@ -16,16 +19,35 @@ struct LibraryView: View {
     var title: String { selectedBottleObj?.name ?? "All Games" }
 
     var displayGames: [GameData] {
-        let filtered = selectedBottle == nil
+        let byBottle = selectedBottle == nil
             ? libraryVM.games
             : libraryVM.games.filter { $0.bottleId.uuidString == selectedBottle }
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        let filtered = query.isEmpty
+            ? byBottle
+            : byBottle.filter { $0.name.localizedCaseInsensitiveContains(query) }
         return filtered.map { game in
             let bottle = bottleVM.bottles.first { $0.id == game.bottleId }
             return GameData.from(game, bottle: bottle)
         }
     }
 
+    private var selectedGameAndBottle: (Game, Bottle)? {
+        guard let selectedGameId,
+              let game = libraryVM.games.first(where: { $0.id == selectedGameId }),
+              let bottle = bottleVM.bottles.first(where: { $0.id == game.bottleId }) else { return nil }
+        return (game, bottle)
+    }
+
     var body: some View {
+        if let (game, bottle) = selectedGameAndBottle {
+            GameDetailView(game: game, bottle: bottle, onBack: { selectedGameId = nil })
+        } else {
+            libraryContent
+        }
+    }
+
+    private var libraryContent: some View {
         Group {
             if displayGames.isEmpty {
                 emptyState
@@ -49,6 +71,7 @@ struct LibraryView: View {
                                     isRunning: isRunning,
                                     onLaunch: { launch(gameData) }
                                 )
+                                .onTapGesture { selectedGameId = gameUUID }
                                 .contextMenu {
                                     if isRunning {
                                         Label("Running…", systemImage: "play.circle.fill")
@@ -86,6 +109,14 @@ struct LibraryView: View {
         )
         .navigationTitle(title)
         .toolbar {
+            if let onOpenComponents {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: onOpenComponents) {
+                        Label("Components", systemImage: "puzzlepiece.extension.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showInstallApp = true }) {
                     Label("Install App", systemImage: "arrow.down.circle.fill")

@@ -15,7 +15,13 @@ actor GameService {
 
     func loadAll() throws -> [Game] {
         let dbURL = StorageManager.shared.gamesDBURL
-        guard FileManager.default.fileExists(atPath: dbURL.path) else { return [] }
+        guard FileManager.default.fileExists(atPath: dbURL.path) else {
+            // No games.json yet at the current storage root (e.g. right after
+            // switching to a fresh/different root) — reset in-memory state too,
+            // otherwise stale entries from a previous root linger forever.
+            games = []
+            return []
+        }
         let data = try Data(contentsOf: dbURL)
         games = try decoder.decode([Game].self, from: data)
         return games

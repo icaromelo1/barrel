@@ -5,6 +5,13 @@ import Foundation
 final class StorageManager {
     static let shared = StorageManager()
 
+    /// Overrides `rootDirectory` entirely — set this in tests to point Barrel's
+    /// storage at a temporary directory instead of real user/SSD paths. `nil` in
+    /// normal app usage.
+    var overrideRoot: URL? {
+        didSet { createDirectoriesIfNeeded() }
+    }
+
     private let ssdPath = "/Volumes/icaro_ssd/barrel-data"
     private let fallbackPath: URL = {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -16,7 +23,8 @@ final class StorageManager {
     }
 
     var rootDirectory: URL {
-        isExternalSSDMounted
+        if let overrideRoot { return overrideRoot }
+        return isExternalSSDMounted
             ? URL(filePath: ssdPath)
             : fallbackPath
     }

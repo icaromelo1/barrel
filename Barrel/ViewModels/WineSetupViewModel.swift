@@ -86,9 +86,8 @@ final class WineSetupViewModel: ObservableObject {
 
         return contents.compactMap { url -> WineBuild? in
             let version = url.lastPathComponent.replacingOccurrences(of: "wine-", with: "")
-            // Gcenx .app bundle path: Contents/Resources/wine/bin/wine
-            let binary = url.appending(path: "Contents/Resources/wine/bin/wine")
-            guard FileManager.default.fileExists(atPath: binary.path) else { return nil }
+            // Search for the real wine binary instead of assuming a fixed release layout.
+            guard WineBuild.findBinDirectory(named: "wine", under: url) != nil else { return nil }
             return WineBuild(
                 version: version,
                 downloadURL: URL(string: "file://local")!,

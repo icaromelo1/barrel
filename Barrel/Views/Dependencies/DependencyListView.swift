@@ -3,6 +3,7 @@ import SwiftUI
 
 struct DependencyListView: View {
     let bottle: Bottle
+    var onSwitchToGames: (() -> Void)? = nil
     @StateObject private var depVM = DependencyViewModel()
 
     private var rendererLabel: String {
@@ -16,6 +17,7 @@ struct DependencyListView: View {
     var body: some View {
         ZStack {
             Color.contentBg.ignoresSafeArea()
+                .onAppear { depVM.load(from: bottle) }
 
             VStack(spacing: 0) {
                 DependencyToolbar(bottle: bottle)
@@ -63,6 +65,7 @@ struct DependencyListView: View {
                 // tabs
                 HStack(spacing: 0) {
                     TabItem(label: "Games", active: false)
+                        .onTapGesture { onSwitchToGames?() }
                     TabItem(label: "Components", active: true)
                     TabItem(label: "Settings", active: false)
                     Spacer()

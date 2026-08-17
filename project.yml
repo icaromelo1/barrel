@@ -36,5 +36,8 @@ targets:
     platform: macOS
     sources:
       - BarrelTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: Barrel

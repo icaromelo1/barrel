@@ -11,9 +11,11 @@ struct SidebarBottleData: Identifiable {
 
 struct BottleSidebarView: View {
     @Binding var selectedBottle: String?
+    @Binding var searchText: String
     @EnvironmentObject private var bottleVM: BottleViewModel
     @EnvironmentObject private var wineSetup: WineSetupViewModel
     @State private var showCreateBottle = false
+    @State private var bottleToDelete: Bottle? = nil
 
     private var displayBottles: [SidebarBottleData] {
         bottleVM.bottles.map { b in
@@ -48,10 +50,18 @@ struct BottleSidebarView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 13))
                             .foregroundStyle(Color.t3)
-                        Text("Search games")
+                        TextField("Search games", text: $searchText)
                             .font(.system(size: 13))
-                            .foregroundStyle(Color.t3)
-                        Spacer()
+                            .foregroundStyle(Color.t1)
+                            .textFieldStyle(.plain)
+                        if !searchText.isEmpty {
+                            Button(action: { searchText = "" }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.t3)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                     .frame(height: 30)
                     .padding(.horizontal, 9)
@@ -108,6 +118,13 @@ struct BottleSidebarView: View {
                         ForEach(displayBottles) { bottle in
                             SidebarBottleRow(bottle: bottle, selected: selectedBottle == bottle.id)
                                 .onTapGesture { selectedBottle = bottle.id }
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        bottleToDelete = bottleVM.bottles.first { $0.id.uuidString == bottle.id }
+                                    } label: {
+                                        Label("Delete Bottle", systemImage: "trash")
+                                    }
+                                }
                         }
                     }
                 }
@@ -148,6 +165,22 @@ struct BottleSidebarView: View {
         }
         .sheet(isPresented: $showCreateBottle) {
             CreateBottleSheet(isPresented: $showCreateBottle, bottleVM: bottleVM)
+        }
+        .confirmationDialog(
+            "Delete \"\(bottleToDelete?.name ?? "")\"?",
+            isPresented: Binding(get: { bottleToDelete != nil }, set: { if !$0 { bottleToDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let bottle = bottleToDelete {
+                    if selectedBottle == bottle.id.uuidString { selectedBottle = nil }
+                    Task { await bottleVM.delete(bottle) }
+                }
+                bottleToDelete = nil
+            }
+            Button("Cancel", role: .cancel) { bottleToDelete = nil }
+        } message: {
+            Text("This deletes the entire Wine prefix, including all installed apps and games inside it. This cannot be undone.")
         }
         .background(
             ZStack {

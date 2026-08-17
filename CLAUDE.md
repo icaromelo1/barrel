@@ -1,5 +1,7 @@
 # Barrel (Cellar) — macOS Wine Gaming App
 
+> ⚠️ **PROJETO DESCONTINUADO em 2026-07-19.** Ver `PROGRESS.md` (seção "Descontinuação") para o motivo completo e `PLANO-GPTK-MIGRACAO.md` para o caminho de retomada, caso um dia valha a pena voltar a mexer nisso. Resumo: a engine Wine usada (Gcenx/wine-crossover) tem bugs reais e não contornáveis (Steam nunca loga, Battle.net trava, até jogos simples travam) — hoje o app é só uma interface bonita para baixar um Wine que não funciona de verdade.
+
 App nativo macOS para rodar jogos Windows via Wine, similar ao CrossOver. Nome no código: **Barrel**. Nome na UI (design): **Cellar**.
 
 ## Stack
@@ -55,25 +57,30 @@ barrel/
 │       │   ├── DesignTokens.swift  ← cores, gradientes, WallpaperView, TrafficLights
 │       │   └── CoverArtView.swift  ← arte procedural + GameData + sampleGames
 │       ├── Bottle/
-│       │   ├── BottleSidebarView.swift   ← sidebar 248px translúcida
+│       │   ├── BottleSidebarView.swift   ← sidebar 248px translúcida, busca real, delete de garrafa
 │       │   └── CreateBottleSheet.swift   ← modal criação de garrafa
 │       ├── Library/
-│       │   ├── LibraryView.swift         ← grid 5 colunas + toolbar
+│       │   ├── LibraryView.swift         ← grid 5 colunas + toolbar + navegação pro GameDetailView
 │       │   └── GameCardView.swift        ← tile com cover art procedural
 │       ├── Dependencies/
-│       │   └── DependencyListView.swift  ← components tab da garrafa
+│       │   └── DependencyListView.swift  ← tab "Components" da garrafa (conectada via botão na toolbar da Library)
 │       └── Game/
-│           └── GameDetailView.swift      ← hero + config + console animado
+│           ├── GameDetailView.swift      ← hero + config real + console com logs reais (GameDetailViewModel)
+│           └── InstallAppSheet.swift     ← catálogo de apps conhecidos (Steam/Epic/GOG/Battle.net) + instalador custom
 └── BarrelTests/
     └── BarrelTests.swift
 ```
 
+`SteamService.swift` (Services/) também existe: instala um wrapper `.exe` compilado (`Tools/steamwebhelper_wrapper.c`) que substitui o `steamwebhelper.exe` real dentro da garrafa e injeta `--no-sandbox --disable-gpu --disable-gpu-sandbox` — fix permanente para o crash "Failed creating offscreen shared JS context" que trava a Steam sob Wine. Ver `.agent/especialista-wine-macos.md` para o contexto completo desse problema.
+
 ## Arquitetura
 
-- `ContentView` — `HStack` com `BottleSidebarView` + área de conteúdo. Roteamento via `AppRoute` enum (`library`, `dependencies`, `gameDetail`).
+- `ContentView` — `NavigationSplitView` com `BottleSidebarView` (sidebar) + área de conteúdo. Roteamento simples via `enum ContentTab { case library, dependencies }` (não existe `AppRoute` — a navegação real é: Library ↔ Components por bottle selecionada, e Library → GameDetailView por clique no card).
 - Todos os services são `actor` (thread-safe).
 - `WineService.run()` retorna `AsyncStream<LogEntry>` para log em tempo real.
 - Garrafa = diretório com `barrel.json` (metadata) + `prefix/` (WINEPREFIX).
+- `WineBuild` resolve o binário `wine` por busca recursiva (`WineBuild.findBinDirectory`), não por caminho fixo — o layout dos releases do Gcenx já mudou entre versões, então nunca assuma `Contents/Resources/wine/bin/wine` como garantido.
+- `Bottle.installedDependencyIds` persiste quais dependências (winetricks/DXVK) já foram instaladas — sem isso, o app esquecia o estado a cada reinício.
 
 ## Design
 
@@ -92,6 +99,20 @@ open Barrel.xcodeproj
 
 # Instalar winetricks (dependência de runtime)
 brew install winetricks
+```
+
+## Verify
+
+O LSP dá falso positivo em erros cross-file ("Cannot find X in scope" para tipos que existem em outro arquivo do mesmo target) — **nunca confie nisso**, só no build real:
+
+```bash
+xcodegen generate && xcodebuild -scheme Barrel -configuration Debug build
+```
+
+Precisa do Xcode completo instalado (não funciona só com Command Line Tools — `xcodebuild` falha com "requires Xcode" se `xcode-select` estiver apontando pra `/Library/Developer/CommandLineTools`). Pra rodar os testes:
+
+```bash
+xcodebuild test -scheme Barrel
 ```
 
 ## Regras de código

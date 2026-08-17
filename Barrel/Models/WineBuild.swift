@@ -10,21 +10,50 @@ struct WineBuild: Codable, Identifiable {
         StorageManager.shared.wineDirectory.appending(path: "wine-\(version)")
     }
 
-    // Gcenx builds are macOS .app bundles: Contents/Resources/wine/bin/wine
-    var wineBinary: URL {
-        localURL.appending(path: "Contents/Resources/wine/bin/wine")
+    // Gcenx macOS builds have historically shipped as `Contents/Resources/wine/bin/wine`,
+    // but the exact layout has changed across releases. Resolve the real bin directory by
+    // searching for the `wine` executable rather than trusting a hardcoded path; fall back
+    // to the legacy guess only if nothing is found (e.g. FileManager enumeration fails).
+    private static let legacyBinDir = "Contents/Resources/wine/bin"
+
+    private var resolvedBinDir: URL {
+        Self.findBinDirectory(named: "wine", under: localURL)
+            ?? localURL.appending(path: Self.legacyBinDir)
     }
 
-    var wineLibPath: String {
-        localURL.appending(path: "Contents/Resources/wine/lib").path
+    var wineBinary: URL {
+        resolvedBinDir.appending(path: "wine")
     }
 
     var wineBinPath: String {
-        localURL.appending(path: "Contents/Resources/wine/bin").path
+        resolvedBinDir.path
+    }
+
+    var wineLibPath: String {
+        resolvedBinDir.deletingLastPathComponent().appending(path: "lib").path
     }
 
     var isInstalled: Bool {
         FileManager.default.fileExists(atPath: wineBinary.path)
+    }
+
+    /// Recursively searches `root` for an executable file named `name`, returning
+    /// its containing directory. Used to locate the real Wine binary without
+    /// assuming a fixed release layout.
+    static func findBinDirectory(named name: String, under root: URL) -> URL? {
+        guard let enumerator = FileManager.default.enumerator(
+            at: root,
+            includingPropertiesForKeys: [.isExecutableKey, .isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else { return nil }
+
+        for case let url as URL in enumerator where url.lastPathComponent == name {
+            let values = try? url.resourceValues(forKeys: [.isExecutableKey, .isRegularFileKey])
+            if values?.isRegularFile == true, values?.isExecutable == true {
+                return url.deletingLastPathComponent()
+            }
+        }
+        return nil
     }
 }
 

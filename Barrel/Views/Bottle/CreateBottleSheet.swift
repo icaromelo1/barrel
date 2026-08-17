@@ -93,8 +93,9 @@ struct CreateBottleSheet: View {
                                 .frame(width: 80, alignment: .leading)
                             Picker("", selection: $selectedRenderer) {
                                 Text("DXVK (DX9/10/11 → Vulkan)").tag(Renderer.dxvk)
-                                Text("D3DMetal (DX12 → Metal)").tag(Renderer.metal)
                                 Text("OpenGL (legacy)").tag(Renderer.gl)
+                                // D3DMetal (DX12) not yet implemented — needs VKD3D-Proton + MoltenVK.
+                                // Renderer.metal case stays in the model so existing bottles keep decoding.
                             }
                             .pickerStyle(.menu)
                             .tint(Color.t1)
