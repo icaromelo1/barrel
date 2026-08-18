@@ -1,38 +1,42 @@
 # Barrel
 
-Aplicativo macOS nativo para rodar jogos de Windows, escrito em SwiftUI.
+Aplicativo macOS nativo para execução de jogos de Windows, escrito em SwiftUI.
 
-## O que é
+## Descrição
 
-Um gerenciador de prefixos do Wine com interface nativa: baixa a build do Wine, cria e
-administra os ambientes, instala lojas (Steam, Epic, GOG, Battle.net) ou executáveis
-avulsos, e mantém a biblioteca de jogos instalados.
+Gerenciador de prefixos do Wine com interface nativa. Realiza o download da build do Wine,
+cria e administra os ambientes, instala lojas (Steam, Epic, GOG, Battle.net) ou
+executáveis avulsos, e mantém a biblioteca de jogos instalados.
 
-## Por que existe
+## Motivação
 
-O programa que eu usava foi descontinuado em 2025, as alternativas ou são de outro sistema
-operacional ou estão abandonadas. Fiz nativo de propósito, sem camada web, para aprender a
-plataforma pelo caminho difícil.
+O programa utilizado anteriormente foi descontinuado em 2025, e as alternativas disponíveis
+destinam-se a outro sistema operacional ou estão sem manutenção. A implementação é nativa,
+sem camada web, por decisão de estudo da plataforma.
 
-## A parte difícil
+## Descontinuado em 19/07/2026
 
-Rodar o instalador é a parte fácil; o problema é o ciclo de vida do processo. Um clique no
-play conseguia disparar várias cópias do mesmo jogo, então existe um bloqueio por
-identificador mais um monitor em duas fases que confirma se o processo realmente subiu.
-E os dados pesados — prefixos do Wine, builds e jogos — ficam fora do disco interno por
-decisão de projeto.
+Após a conclusão da interface e dos serviços, o motor Wine foi testado empiricamente, com
+criação de prefixos reais e instalação de clientes e jogos. Os defeitos encontrados são do
+próprio motor e não são contornáveis por configuração:
 
-## Estado
+* A Steam completa o handshake com o servidor, mas tem o login rejeitado de forma
+  consistente, reproduzido em instalações independentes e do zero.
+* O launcher da Battle.net entra em deadlock na criação de memória compartilhada nomeada,
+  sem criar janela. A correção documentada pela comunidade foi testada e não resolveu.
+* Títulos simples e antigos também não desenham janela.
 
-**Pausado**, num problema já diagnosticado e não resolvido: o cliente da Steam abre com a
-janela em branco. A causa é o processo gráfico do framework embutido dele falhando em
-silêncio sob a camada de compatibilidade. O que já foi tentado e descartado está em
-`PROGRESS.md`.
+Foram descartadas como causa a camada de renderização, que funciona corretamente para
+aplicativos do próprio Wine, e a tradução por Rosetta 2, já que produtos comerciais em
+operação utilizam a mesma camada.
 
-## Como abrir
+O diagnóstico e o caminho de retomada avaliado, baseado no Apple Game Porting Toolkit,
+estão documentados em `PROGRESS.md` e `PLANO-GPTK-MIGRACAO.md`.
+
+## Execução
 
 Abrir `Barrel.xcodeproj` no Xcode e compilar. Requer macOS com Apple Silicon.
 
 ## Stack
 
-Swift · SwiftUI · Wine
+Swift, SwiftUI, Wine
